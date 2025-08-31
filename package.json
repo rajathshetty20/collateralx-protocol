@@ -1,0 +1,16 @@
+{
+  "name": "collateralx",
+  "version": "1.0.0",
+  "description": "A lending protocol that allows users to deposit ETH as collateral and borrow stablecoins against it.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat test"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "hardhat": "^2.26.3",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^5.0.0"
+  }
+}
