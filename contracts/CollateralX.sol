@@ -107,14 +107,15 @@ contract CollateralX {
     require(collateralValue < borrowedAmount * LIQUIDATION_RATIO / 100, "User cannot be liquidated as collateral is enough");
 
     require(stableCoinInterface.transferFrom(msg.sender, address(this), borrowedAmount), "Transfer failed");
-    payable(msg.sender).transfer(loanAccount.collateralAmount);
+    uint256 collateralToTransfer = loanAccount.collateralAmount;
+    payable(msg.sender).transfer(collateralToTransfer);
     loanAccount.collateralAmount = 0;
     delete loanAccount.loans;
 
-    emit CollateralLiquidated(user, loanAccount.collateralAmount);
+    emit CollateralLiquidated(user, collateralToTransfer);
   }
 
-  function processLoanData(Loan[] storage loans) internal view returns (uint256, uint256) {
+  function processLoanData(Loan[] memory loans) internal view returns (uint256, uint256) {
     uint256 totalPrincipal = 0;
     uint256 totalInterest = 0;
     for(uint256 i = 0; i < loans.length; i++) {
@@ -134,13 +135,13 @@ contract CollateralX {
     for(uint256 i = 0; i < loanAccount.loans.length; i++) {
       loanStatuses[i] = LoanStatus({
         principal: loanAccount.loans[i].principal,
-        interest: loanAccount.loans[i].principal * INTEREST_RATE / 100 * (block.timestamp - loanAccount.loans[i].timestamp) / 365 days,
+        interest: loanAccount.loans[i].principal * INTEREST_RATE / 100 * (block.timestamp - loanAccount.loans[i].timestamp) / 365 days
       });
     }
     return loanStatuses;
   }
 
-  function calculateValueOfCollateral(uint256 collateralAmount) internal view returns (uint256) {
+  function calculateValueOfCollateral(uint256 collateralAmount) internal pure returns (uint256) {
     return collateralAmount * 1000; //asuming a fixed eth to usd price of 1000
   }
 
