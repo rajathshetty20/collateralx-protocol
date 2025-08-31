@@ -28,10 +28,10 @@ liquidate(address user) external
 - ERC20 stablecoin for testing
 - Includes faucet function
 
-## Quick Start
+## Contract Interactions
 
 ```javascript
-// 1. Deploy
+// 1. Deploy contracts
 const stableCoin = await TestCoin.deploy()
 const collateralX = await CollateralX.deploy(stableCoin.address)
 
@@ -56,6 +56,37 @@ const totalDebt = loanStatus.reduce((acc, loan) => acc + loan.principal + loan.i
 await stableCoin.approve(collateralX.address, totalDebt)
 await collateralX.liquidate(userToLiquidate)
 ```
+
+## Setup
+
+```bash
+npm install          # Install dependencies
+npm test             # Run tests
+```
+
+## Local Deployment
+
+```bash
+# Terminal 1: Start local blockchain
+npm run node
+
+# Terminal 2: Compile and deploy contracts
+npm run compile 
+npm run deploy
+```
+
+The local network:
+- RPC URL: `http://127.0.0.1:8545`
+- Chain ID: 31337
+- Pre-funded accounts with 10,000 ETH each
+
+The deployment script will:
+- Deploy TestCoin contract
+- Deploy CollateralX contract
+- Fund CollateralX with 1,000,000 TestCoins for lending
+- Display contract addresses
+
+
 
 ## Security Notes
 
