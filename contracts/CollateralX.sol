@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 contract CollateralX {
 
   uint256 public constant COLLATERAL_RATIO = 150;
@@ -10,11 +10,15 @@ contract CollateralX {
   uint256 public constant INTEREST_RATE = 10;
 
   address public stableCoinAddress;
+  address public priceFeedAddress;
   IERC20 public stableCoinInterface;
+  AggregatorV3Interface public priceFeedInterface;
 
-  constructor(address _stableCoinAddress) {
+  constructor(address _stableCoinAddress, address _priceFeedAddress) {
     stableCoinAddress = _stableCoinAddress;
+    priceFeedAddress = _priceFeedAddress;
     stableCoinInterface = IERC20(_stableCoinAddress);
+    priceFeedInterface = AggregatorV3Interface(_priceFeedAddress);
   }
 
   mapping(address => LoanAccount) public loanAccounts;
@@ -141,8 +145,13 @@ contract CollateralX {
     return loanStatuses;
   }
 
-  function calculateValueOfCollateral(uint256 collateralAmount) internal pure returns (uint256) {
-    return collateralAmount * 1000; //asuming a fixed eth to usd price of 1000
+  function calculateValueOfCollateral(uint256 collateralAmount) internal view returns (uint256) {
+    (, int256 price, , , ) = priceFeedInterface.latestRoundData();
+    require(price > 0, "Invalid price feed");
+    
+    // Convert price to 18 decimals (Chainlink uses 8 decimals for ETH/USD)
+    uint256 ethPrice = uint256(price) * 10**10;
+    return (collateralAmount * ethPrice) / 1e18;
   }
 
   event CollateralDeposited(address user, uint256 amount);

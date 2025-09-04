@@ -10,6 +10,7 @@ A lending protocol that allows users to deposit ETH as collateral and borrow sta
 - Flexible loan repayment
 - Liquidation (120% threshold)
 - 10% annual interest rate
+- Real-time ETH/USD price feeds via Chainlink
 
 ## Contracts
 
@@ -28,12 +29,17 @@ liquidate(address user) external
 - ERC20 stablecoin for testing
 - Includes faucet function
 
+### TestPriceFeed.sol
+- Implements AggregatorV3Interface for ETH/USD price feed
+- Allows price updates for testing scenarios
+
 ## Contract Interactions
 
 ```javascript
 // 1. Deploy contracts
 const stableCoin = await TestCoin.deploy()
-const collateralX = await CollateralX.deploy(stableCoin.address)
+const testPriceFeed = await TestPriceFeed.deploy(ethers.parseUnits("1000", 8)) // $1000/ETH
+const collateralX = await CollateralX.deploy(stableCoin.address, testPriceFeed.address)
 
 // 2. Deposit ETH (1 ETH)
 await collateralX.depositCollateral({ 
@@ -82,6 +88,7 @@ The local network:
 
 The deployment script will:
 - Deploy TestCoin contract
+- Deploy TestPriceFeed contract
 - Deploy CollateralX contract
 - Fund CollateralX with 1,000,000 TestCoins for lending
 - Display contract addresses
@@ -93,6 +100,7 @@ The deployment script will:
 - Maintain >150% collateral ratio
 - Positions below 120% can be liquidated
 - Interest accumulates over time
+- Uses Chainlink's trusted price feeds for accurate ETH valuation
 
 ## License
 

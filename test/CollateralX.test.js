@@ -5,6 +5,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 describe("CollateralX", function () {
   let collateralX;
   let testCoin;
+  let testPriceFeed;
   let owner;
   let user1;
   let user2;
@@ -13,6 +14,7 @@ describe("CollateralX", function () {
   const COLLATERAL_RATIO = 150;
   const LIQUIDATION_RATIO = 120;
   const INTEREST_RATE = 10;
+  const INITIAL_ETH_PRICE = 1000; // $1000 per ETH
 
   beforeEach(async function () {
     [owner, user1, user2, liquidator] = await ethers.getSigners();
@@ -22,9 +24,17 @@ describe("CollateralX", function () {
     testCoin = await TestCoin.deploy();
     await testCoin.waitForDeployment();
 
+    // Deploy TestPriceFeed
+    const TestPriceFeed = await ethers.getContractFactory("TestPriceFeed");
+    testPriceFeed = await TestPriceFeed.deploy(ethers.parseUnits(INITIAL_ETH_PRICE.toString(), 8));
+    await testPriceFeed.waitForDeployment();
+
     // Deploy CollateralX
     const CollateralX = await ethers.getContractFactory("CollateralX");
-    collateralX = await CollateralX.deploy(await testCoin.getAddress());
+    collateralX = await CollateralX.deploy(
+      await testCoin.getAddress(),
+      await testPriceFeed.getAddress()
+    );
     await collateralX.waitForDeployment();
 
     // Mint some tokens to the contract for lending
@@ -37,8 +47,9 @@ describe("CollateralX", function () {
   });
 
   describe("Deployment", function () {
-    it("Should set the correct stablecoin address", async function () {
+    it("Should set the correct stablecoin and price feed addresses", async function () {
       expect(await collateralX.stableCoinAddress()).to.equal(await testCoin.getAddress());
+      expect(await collateralX.priceFeedAddress()).to.equal(await testPriceFeed.getAddress());
     });
 
     it("Should have correct constants", async function () {
@@ -80,11 +91,13 @@ describe("CollateralX", function () {
   describe("Stablecoin Borrowing", function () {
     beforeEach(async function () {
       // Deposit collateral for testing
+      // 2 ETH at $1000/ETH = $2000 collateral value
+      // Max borrow = 2000 * 100 / 150 = $1333
       await collateralX.connect(user1).depositCollateral({ value: ethers.parseEther("2") });
     });
 
     it("Should allow borrowing within collateral limits", async function () {
-      const borrowAmount = ethers.parseEther("1000"); // ETH value is 2000, max borrow = 2000 * 100 / 150 = 1333
+      const borrowAmount = ethers.parseEther("1300");
       
       await expect(collateralX.connect(user1).borrowStableCoin(borrowAmount))
         .to.emit(collateralX, "StableCoinBorrowed")
@@ -95,10 +108,24 @@ describe("CollateralX", function () {
     });
 
     it("Should revert if borrowing exceeds collateral ratio", async function () {
-      const collateralValue = ethers.parseEther("2000"); // ETH value is 2000, max borrow = 2000 * 100 / 150 = 1333
+      const collateralValue = ethers.parseEther("2000");
 
       await expect(collateralX.connect(user1).borrowStableCoin(collateralValue))
         .to.be.revertedWith("Collateral is not enough to borrow this amount");
+    });
+
+    it("Should adjust borrowing limits when ETH price changes", async function () {
+      // Update price to $2000/ETH
+      await testPriceFeed.updatePrice(ethers.parseUnits("2000", 8));
+
+      const borrowAmount = ethers.parseEther("1800");
+      
+      await expect(collateralX.connect(user1).borrowStableCoin(borrowAmount))
+        .to.emit(collateralX, "StableCoinBorrowed")
+        .withArgs(user1.address, borrowAmount);
+
+      const balance = await testCoin.balanceOf(user1.address);
+      expect(balance).to.be.gte(borrowAmount);
     });
 
     it("Should revert if no collateral deposited", async function () {
