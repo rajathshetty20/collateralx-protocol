@@ -132,6 +132,7 @@ contract CollateralX {
   struct LoanStatus {
     uint256 principal;
     uint256 interest;
+    uint256 timestamp;
   }
   function getLoanStatus(address user) external view returns(LoanStatus[] memory){
     LoanAccount storage loanAccount = loanAccounts[user];
@@ -139,7 +140,8 @@ contract CollateralX {
     for(uint256 i = 0; i < loanAccount.loans.length; i++) {
       loanStatuses[i] = LoanStatus({
         principal: loanAccount.loans[i].principal,
-        interest: loanAccount.loans[i].principal * INTEREST_RATE / 100 * (block.timestamp - loanAccount.loans[i].timestamp) / 365 days
+        interest: loanAccount.loans[i].principal * INTEREST_RATE / 100 * (block.timestamp - loanAccount.loans[i].timestamp) / 365 days,
+        timestamp: loanAccount.loans[i].timestamp
       });
     }
     return loanStatuses;
