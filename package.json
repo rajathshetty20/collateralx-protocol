@@ -7,14 +7,16 @@
     "test": "npx hardhat test",
     "compile": "npx hardhat compile",
     "node": "npx hardhat node",
-    "deploy": "npx hardhat run scripts/deploy.js --network localhost"
+    "deploy:localhost": "npx hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "npx hardhat run scripts/deploy.js --network sepolia"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "hardhat": "^2.26.3",
+    "@chainlink/contracts": "^0.8.0",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@openzeppelin/contracts": "^5.0.0",
-    "@chainlink/contracts": "^0.8.0"
+    "dotenv": "^17.2.2",
+    "hardhat": "^2.26.3"
   }
 }

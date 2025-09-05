@@ -70,15 +70,25 @@ npm install          # Install dependencies
 npm test             # Run tests
 ```
 
-## Local Deployment
+## Deployment
 
+### Environment Setup
+Create a `.env` file in the root directory:
+```
+PRIVATE_KEY=your_deployer_account_private_key
+SEPOLIA_RPC_URL=your_sepolia_rpc_url
+ETHERSCAN_API_KEY=your_etherscan_api_key
+CHAINLINK_ETH_USD_FEED=0x694AA1769357215DE4FAC081bf1f309aDC325306
+```
+
+### Local Deployment
 ```bash
-# Terminal 1: Start local blockchain
+# Terminal 1
+npm run compile
 npm run node
 
-# Terminal 2: Compile and deploy contracts
-npm run compile 
-npm run deploy
+# Terminal 2
+npm run deploy:localhost
 ```
 
 The local network:
@@ -93,7 +103,11 @@ The deployment script will:
 - Fund CollateralX with 1,000,000 TestCoins for lending
 - Display contract addresses
 
-
+### Sepolia Deployment
+```bash
+npm run compile
+npm run deploy:sepolia
+```
 
 ## Security Notes
 
